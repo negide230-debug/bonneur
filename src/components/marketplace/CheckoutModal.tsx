@@ -3,7 +3,8 @@ import { X, MapPin, Phone, User } from 'lucide-react';
 import { CartItem } from '../../types';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { storage } from '../../utils/storage';
+import { ProductService } from '../../services/productService';
+import { OrderService } from '../../services/orderService';
 
 interface CheckoutModalProps {
   cartItems: CartItem[];
@@ -28,52 +29,54 @@ export function CheckoutModal({
     notes: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Group items by farmer
-    const ordersByFarmer = cartItems.reduce((acc, item) => {
-      if (!acc[item.farmerId]) {
-        acc[item.farmerId] = [];
-      }
-      acc[item.farmerId].push(item);
-      return acc;
-    }, {} as Record<string, CartItem[]>);
+    try {
+      // Group items by farmer
+      const ordersByFarmer = cartItems.reduce((acc, item) => {
+        if (!acc[item.farmerId]) {
+          acc[item.farmerId] = [];
+        }
+        acc[item.farmerId].push(item);
+        return acc;
+      }, {} as Record<string, CartItem[]>);
 
-    // Create orders for each farmer
-    const orders = Object.entries(ordersByFarmer).map(([farmerId, items]) => {
-      const products = storage.getProducts();
-      const orderTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      // Create orders for each farmer
+      const products = await ProductService.getAllProducts();
       
-      return {
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        customerId,
-        customerName,
-        customerPhone: formData.phone,
-        farmerId,
-        products: items.map(item => {
-          const product = products.find(p => p.id === item.productId);
-          return {
-            productId: item.productId,
-            productName: product?.name || 'Unknown Product',
-            quantity: item.quantity,
-            price: item.price
-          };
-        }),
-        total: orderTotal,
-        status: 'pending' as const,
-        deliveryAddress: formData.address,
-        estimatedDelivery: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
-        createdAt: new Date(),
-        notes: formData.notes
-      };
-    });
+      for (const [farmerId, items] of Object.entries(ordersByFarmer)) {
+        const orderTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        
+        const orderData = {
+          customerId,
+          customerName,
+          customerPhone: formData.phone,
+          farmerId,
+          products: items.map(item => {
+            const product = products.find(p => p.id === item.productId);
+            return {
+              productId: item.productId,
+              productName: product?.name || 'Unknown Product',
+              quantity: item.quantity,
+              price: item.price
+            };
+          }),
+          total: orderTotal,
+          status: 'pending' as const,
+          deliveryAddress: formData.address,
+          estimatedDelivery: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
+          notes: formData.notes
+        };
 
-    // Save orders
-    const existingOrders = storage.getOrders();
-    storage.saveOrders([...existingOrders, ...orders]);
+        await OrderService.createOrder(orderData);
+      }
 
-    onSuccess();
+      onSuccess();
+    } catch (error) {
+      console.error('Error creating order:', error);
+      alert('Error placing order. Please try again.');
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

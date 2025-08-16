@@ -7,17 +7,28 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:reset": "rm -f agriconnect.db && npm run dev"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.7",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.3.0",
+    "@types/sqlite3": "^3.1.11",
+    "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
+    "cors": "^2.8.5",
     "date-fns": "^4.1.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^3.1.2",
+    "sqlite3": "^5.1.7",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {

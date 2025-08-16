@@ -1,4 +1,85 @@
 import { User, Product, Farmer, Order, MarketTrend } from '../types';
+import { ProductService } from '../services/productService';
+import { UserService } from '../services/userService';
+
+// Initialize sample data in database
+export const initializeSampleData = async () => {
+  try {
+    // Check if sample data already exists
+    const existingProducts = await ProductService.getAllProducts();
+    if (existingProducts.length > 0) {
+      return; // Sample data already exists
+    }
+
+    // Get farmers from database
+    const users = await UserService.getAllUsers();
+    const farmers = users.filter(u => u.role === 'farmer');
+    
+    if (farmers.length === 0) {
+      console.log('No farmers found, skipping sample product creation');
+      return;
+    }
+
+    // Create sample products
+    const sampleProducts = [
+      {
+        farmerId: farmers[0].id,
+        name: 'Free Range Chicken',
+        category: 'chicken' as const,
+        price: 3200,
+        unit: 'per kg',
+        description: 'Premium free-range chicken raised on organic feed with no antibiotics',
+        images: [
+          'https://images.pexels.com/photos/1059943/pexels-photo-1059943.jpeg?auto=compress&cs=tinysrgb&w=400',
+          'https://images.pexels.com/photos/1059947/pexels-photo-1059947.jpeg?auto=compress&cs=tinysrgb&w=400'
+        ],
+        stock: 50,
+        quality: {
+          rating: 4.8,
+          reviews: 45,
+          organic: true,
+          freshness: 95
+        },
+        location: {
+          lat: -1.9441,
+          lng: 30.0619,
+          address: 'Kigali, Rwanda'
+        }
+      },
+      {
+        farmerId: farmers[0].id,
+        name: 'Farm Fresh Eggs',
+        category: 'eggs' as const,
+        price: 60,
+        unit: 'per piece',
+        description: 'Fresh eggs from free-range hens, collected daily',
+        images: [
+          'https://images.pexels.com/photos/162712/egg-white-food-protein-162712.jpeg?auto=compress&cs=tinysrgb&w=400'
+        ],
+        stock: 200,
+        quality: {
+          rating: 4.9,
+          reviews: 67,
+          organic: true,
+          freshness: 98
+        },
+        location: {
+          lat: -1.9441,
+          lng: 30.0619,
+          address: 'Kigali, Rwanda'
+        }
+      }
+    ];
+
+    for (const productData of sampleProducts) {
+      await ProductService.createProduct(productData);
+    }
+
+    console.log('Sample data initialized successfully');
+  } catch (error) {
+    console.error('Error initializing sample data:', error);
+  }
+};
 
 export const mockFarmers: Farmer[] = [
   {

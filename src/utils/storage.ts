@@ -1,64 +1,67 @@
-// Local storage utilities for demo purposes
-// In production, this would be replaced with API calls
+import { UserService } from '../services/userService';
+import { ProductService } from '../services/productService';
+import { OrderService } from '../services/orderService';
+import { User, Product, Order } from '../types';
 
 export const storage = {
   // Users
-  getUsers: (): any[] => {
-    return JSON.parse(localStorage.getItem('agriconnect_users') || '[]');
+  getUsers: async (): Promise<User[]> => {
+    try {
+      return await UserService.getAllUsers();
+    } catch (error) {
+      console.error('Error getting users:', error);
+      return [];
+    }
   },
   
-  saveUsers: (users: any[]) => {
-    localStorage.setItem('agriconnect_users', JSON.stringify(users));
+  saveUsers: async (users: User[]): Promise<void> => {
+    // This method is deprecated - use UserService methods instead
+    console.warn('saveUsers is deprecated - use UserService methods instead');
   },
 
   // Products
-  getProducts: (): any[] => {
-    return JSON.parse(localStorage.getItem('agriconnect_products') || '[]');
+  getProducts: async (): Promise<Product[]> => {
+    try {
+      return await ProductService.getAllProducts();
+    } catch (error) {
+      console.error('Error getting products:', error);
+      return [];
+    }
   },
   
-  saveProducts: (products: any[]) => {
-    localStorage.setItem('agriconnect_products', JSON.stringify(products));
+  saveProducts: async (products: Product[]): Promise<void> => {
+    // This method is deprecated - use ProductService methods instead
+    console.warn('saveProducts is deprecated - use ProductService methods instead');
   },
 
   // Orders
-  getOrders: (): any[] => {
-    return JSON.parse(localStorage.getItem('agriconnect_orders') || '[]');
+  getOrders: async (): Promise<Order[]> => {
+    try {
+      return await OrderService.getAllOrders();
+    } catch (error) {
+      console.error('Error getting orders:', error);
+      return [];
+    }
   },
   
-  saveOrders: (orders: any[]) => {
-    localStorage.setItem('agriconnect_orders', JSON.stringify(orders));
+  saveOrders: async (orders: Order[]): Promise<void> => {
+    // This method is deprecated - use OrderService methods instead
+    console.warn('saveOrders is deprecated - use OrderService methods instead');
   },
 
-  // Initialize with default admin users
-  initializeDefaultUsers: () => {
-    const existingUsers = storage.getUsers();
-    if (existingUsers.length === 0) {
-      const defaultUsers = [
-        {
-          id: 'admin-1',
-          name: 'Admin User',
-          email: 'admin@demo.com',
-          role: 'admin',
-          location: { lat: -1.9441, lng: 30.0619, address: 'Kigali, Rwanda' },
-          phone: '+250788000001',
-          createdAt: new Date(),
-          isActive: true
-        },
-        {
-          id: 'superadmin-1',
-          name: 'Super Admin',
-          email: 'superadmin@demo.com',
-          role: 'superadmin',
-          location: { lat: -1.9441, lng: 30.0619, address: 'Kigali, Rwanda' },
-          phone: '+250788000000',
-          createdAt: new Date(),
-          isActive: true
-        }
-      ];
-      storage.saveUsers(defaultUsers);
-    }
+  // Sync methods for backward compatibility (will be removed)
+  getUsersSync: (): User[] => {
+    // Fallback for components that still use sync methods
+    return [];
+  },
+  
+  getProductsSync: (): Product[] => {
+    // Fallback for components that still use sync methods
+    return [];
+  },
+  
+  getOrdersSync: (): Order[] => {
+    // Fallback for components that still use sync methods
+    return [];
   }
 };
-
-// Initialize default users on app start
-storage.initializeDefaultUsers();

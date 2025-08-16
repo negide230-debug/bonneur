@@ -4,7 +4,7 @@ import { Order } from '../../types';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import { storage } from '../../utils/storage';
+import { OrderService } from '../../services/orderService';
 
 interface OrderManagementProps {
   farmerId: string;
@@ -18,19 +18,22 @@ export function OrderManagement({ farmerId }: OrderManagementProps) {
     loadOrders();
   }, [farmerId]);
 
-  const loadOrders = () => {
-    const allOrders = storage.getOrders();
-    const farmerOrders = allOrders.filter(order => order.farmerId === farmerId);
-    setOrders(farmerOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+  const loadOrders = async () => {
+    try {
+      const farmerOrders = await OrderService.getOrdersByFarmer(farmerId);
+      setOrders(farmerOrders);
+    } catch (error) {
+      console.error('Error loading orders:', error);
+    }
   };
 
-  const updateOrderStatus = (orderId: string, status: Order['status']) => {
-    const allOrders = storage.getOrders();
-    const updatedOrders = allOrders.map(order => 
-      order.id === orderId ? { ...order, status } : order
-    );
-    storage.saveOrders(updatedOrders);
-    loadOrders();
+  const updateOrderStatus = async (orderId: string, status: Order['status']) => {
+    try {
+      await OrderService.updateOrderStatus(orderId, status);
+      loadOrders();
+    } catch (error) {
+      console.error('Error updating order status:', error);
+    }
   };
 
   const filteredOrders = orders.filter(order => 

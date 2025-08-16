@@ -3,7 +3,8 @@ import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { CartItem, Product, Farmer } from '../../types';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { storage } from '../../utils/storage';
+import { ProductService } from '../../services/productService';
+import { UserService } from '../../services/userService';
 
 interface CartViewProps {
   cartItems: CartItem[];
@@ -28,9 +29,21 @@ export function CartView({
   const [allFarmers, setAllFarmers] = React.useState<Farmer[]>([]);
 
   React.useEffect(() => {
-    setAllProducts(storage.getProducts());
-    setAllFarmers(storage.getUsers().filter(u => u.role === 'farmer') as Farmer[]);
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    try {
+      const products = await ProductService.getAllProducts();
+      const users = await UserService.getAllUsers();
+      const farmers = users.filter(u => u.role === 'farmer') as Farmer[];
+      
+      setAllProducts(products);
+      setAllFarmers(farmers);
+    } catch (error) {
+      console.error('Error loading cart data:', error);
+    }
+  };
 
   const getCartItemDetails = (item: CartItem) => {
     const product = allProducts.find(p => p.id === item.productId);

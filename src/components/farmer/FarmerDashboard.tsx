@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Package, ShoppingBag, TrendingUp, DollarSign } from 'lucide-react';
 import { Card } from '../ui/Card';
-import { storage } from '../../utils/storage';
+import { ProductService } from '../../services/productService';
+import { OrderService } from '../../services/orderService';
 
 interface FarmerDashboardProps {
   farmerId: string;
@@ -19,22 +20,26 @@ export function FarmerDashboard({ farmerId }: FarmerDashboardProps) {
     loadStats();
   }, [farmerId]);
 
-  const loadStats = () => {
-    const products = storage.getProducts().filter(p => p.farmerId === farmerId);
-    const orders = storage.getOrders().filter(o => o.farmerId === farmerId);
-    
-    const totalRevenue = orders
-      .filter(o => o.status === 'delivered')
-      .reduce((sum, order) => sum + order.total, 0);
-    
-    const pendingOrders = orders.filter(o => o.status === 'pending').length;
+  const loadStats = async () => {
+    try {
+      const products = await ProductService.getProductsByFarmer(farmerId);
+      const orders = await OrderService.getOrdersByFarmer(farmerId);
+      
+      const totalRevenue = orders
+        .filter(o => o.status === 'delivered')
+        .reduce((sum, order) => sum + order.total, 0);
+      
+      const pendingOrders = orders.filter(o => o.status === 'pending').length;
 
-    setStats({
-      totalProducts: products.length,
-      totalOrders: orders.length,
-      totalRevenue,
-      pendingOrders
-    });
+      setStats({
+        totalProducts: products.length,
+        totalOrders: orders.length,
+        totalRevenue,
+        pendingOrders
+      });
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
   };
 
   const statCards = [

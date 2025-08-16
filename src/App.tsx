@@ -10,7 +10,7 @@ import { AuthView } from './views/AuthView';
 import { CartView } from './views/CartView';
 import { CheckoutModal } from './components/marketplace/CheckoutModal';
 import { CartItem } from './types';
-import { storage } from './utils/storage';
+import { initializeSampleData } from './utils/mockData';
 
 function App() {
   const [currentView, setCurrentView] = useState('marketplace');
@@ -19,10 +19,21 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
 
+  React.useEffect(() => {
+    // Initialize sample data on app start
+    initializeSampleData();
+  }, []);
+
   const handleAddToCart = (productId: string) => {
-    const products = storage.getProducts();
-    const product = products.find(p => p.id === productId);
-    if (!product) return;
+    // This will be handled by the marketplace component
+    // For now, we'll create a simple cart item
+    const newItem: CartItem = {
+      id: Date.now().toString(),
+      productId: productId,
+      quantity: 1,
+      price: 3000, // Default price, should be fetched from product
+      farmerId: 'farmer-1' // Default farmer, should be fetched from product
+    };
 
     const existingItem = cartItems.find(item => item.productId === productId);
     
@@ -35,13 +46,6 @@ function App() {
         )
       );
     } else {
-      const newItem: CartItem = {
-        id: Date.now().toString(),
-        productId: productId,
-        quantity: 1,
-        price: product.price,
-        farmerId: product.farmerId
-      };
       setCartItems(prev => [...prev, newItem]);
     }
   };

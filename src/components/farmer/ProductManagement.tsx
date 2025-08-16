@@ -4,7 +4,7 @@ import { Product } from '../../types';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import { storage } from '../../utils/storage';
+import { ProductService } from '../../services/productService';
 import { ProductForm } from './ProductForm';
 
 interface ProductManagementProps {
@@ -20,64 +20,64 @@ export function ProductManagement({ farmerId }: ProductManagementProps) {
     loadProducts();
   }, [farmerId]);
 
-  const loadProducts = () => {
-    const allProducts = storage.getProducts();
-    const farmerProducts = allProducts.filter(p => p.farmerId === farmerId);
-    setProducts(farmerProducts);
+  const loadProducts = async () => {
+    try {
+      const farmerProducts = await ProductService.getProductsByFarmer(farmerId);
+      setProducts(farmerProducts);
+    } catch (error) {
+      console.error('Error loading products:', error);
+    }
   };
 
-  const handleSaveProduct = (productData: Partial<Product>) => {
-    const allProducts = storage.getProducts();
-    
-    if (editingProduct) {
-      // Update existing product
-      const updatedProducts = allProducts.map(p => 
-        p.id === editingProduct.id 
-          ? { ...p, ...productData, updatedAt: new Date() }
-          : p
-      );
-      storage.saveProducts(updatedProducts);
-    } else {
-      // Create new product
-      const newProduct: Product = {
-        id: Date.now().toString(),
-        farmerId,
-        ...productData,
-        quality: {
-          rating: 0,
-          reviews: 0,
-          organic: productData.quality?.organic || false,
-          freshness: 100
-        },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        isActive: true
-      } as Product;
+  const handleSaveProduct = async (productData: Partial<Product>) => {
+    try {
+      if (editingProduct) {
+        // Update existing product
+        await ProductService.updateProduct(editingProduct.id, productData);
+      } else {
+        // Create new product
+        await ProductService.createProduct({
+          ...productData,
+          farmerId,
+          quality: {
+            rating: 0,
+            reviews: 0,
+            organic: productData.quality?.organic || false,
+            freshness: 100
+          }
+        });
+      }
       
-      storage.saveProducts([...allProducts, newProduct]);
-    }
-    
-    loadProducts();
-    setShowForm(false);
-    setEditingProduct(null);
-  };
-
-  const handleDeleteProduct = (productId: string) => {
-    if (confirm('Delete this product?')) {
-      const allProducts = storage.getProducts();
-      const updatedProducts = allProducts.filter(p => p.id !== productId);
-      storage.saveProducts(updatedProducts);
       loadProducts();
+      setShowForm(false);
+      setEditingProduct(null);
+    } catch (error) {
+      console.error('Error saving product:', error);
+      alert('Error saving product');
     }
   };
 
-  const handleToggleActive = (productId: string) => {
-    const allProducts = storage.getProducts();
-    const updatedProducts = allProducts.map(p => 
-      p.id === productId ? { ...p, isActive: !p.isActive } : p
-    );
-    storage.saveProducts(updatedProducts);
-    loadProducts();
+  const handleDeleteProduct = async (productId: string) => {
+    if (confirm('Delete this product?')) {
+      try {
+        await ProductService.deleteProduct(productId);
+        loadProducts();
+      } catch (error) {
+        console.error('Error deleting product:', error);
+      }
+    }
+  };
+
+  const handleToggleActive = async (productId: string) => {
+    try {
+      const product = products.find(p => p.id === productId);
+      if (product) {
+        await ProductService.updateProduct(productId, { isActive: !product.isActive });
+        loadProducts();
+      }
+    } catch (error) {
+      console.error('Error toggling product status:', error);
+    }
   };
 
   if (showForm) {

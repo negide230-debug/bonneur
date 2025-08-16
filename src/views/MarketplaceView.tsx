@@ -3,7 +3,8 @@ import { Sparkles } from 'lucide-react';
 import { SearchFilters } from '../components/marketplace/SearchFilters';
 import { ProductCard } from '../components/marketplace/ProductCard';
 import { RecommendationCard } from '../components/marketplace/RecommendationCard';
-import { storage } from '../utils/storage';
+import { ProductService } from '../services/productService';
+import { UserService } from '../services/userService';
 import { generateRecommendations } from '../utils/recommendations';
 import { Product, Farmer } from '../types';
 
@@ -20,11 +21,21 @@ export function MarketplaceView({ onAddToCart }: MarketplaceViewProps) {
   const [sortBy, setSortBy] = useState('recommended');
 
   React.useEffect(() => {
-    const allProducts = storage.getProducts().filter(p => p.isActive);
-    const allFarmers = storage.getUsers().filter(u => u.role === 'farmer');
-    setProducts(allProducts);
-    setFarmers(allFarmers as Farmer[]);
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    try {
+      const allProducts = await ProductService.getAllProducts();
+      const allUsers = await UserService.getAllUsers();
+      const allFarmers = allUsers.filter(u => u.role === 'farmer') as Farmer[];
+      
+      setProducts(allProducts.filter(p => p.isActive));
+      setFarmers(allFarmers);
+    } catch (error) {
+      console.error('Error loading marketplace data:', error);
+    }
+  };
 
   // Mock user location (Kigali)
   const userLocation = { lat: -1.9441, lng: 30.0619 };

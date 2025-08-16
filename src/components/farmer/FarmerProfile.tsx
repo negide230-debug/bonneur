@@ -4,7 +4,7 @@ import { Farmer } from '../../types';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import { storage } from '../../utils/storage';
+import { UserService } from '../../services/userService';
 
 interface FarmerProfileProps {
   farmerId: string;
@@ -19,23 +19,26 @@ export function FarmerProfile({ farmerId }: FarmerProfileProps) {
     loadFarmerProfile();
   }, [farmerId]);
 
-  const loadFarmerProfile = () => {
-    const users = storage.getUsers();
-    const farmerData = users.find(u => u.id === farmerId && u.role === 'farmer');
-    if (farmerData) {
-      setFarmer(farmerData);
-      setFormData(farmerData);
+  const loadFarmerProfile = async () => {
+    try {
+      const farmerData = await UserService.getUserById(farmerId);
+      if (farmerData && farmerData.role === 'farmer') {
+        setFarmer(farmerData as Farmer);
+        setFormData(farmerData);
+      }
+    } catch (error) {
+      console.error('Error loading farmer profile:', error);
     }
   };
 
-  const handleSave = () => {
-    const users = storage.getUsers();
-    const updatedUsers = users.map(u => 
-      u.id === farmerId ? { ...u, ...formData } : u
-    );
-    storage.saveUsers(updatedUsers);
-    loadFarmerProfile();
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      await UserService.updateUser(farmerId, formData);
+      loadFarmerProfile();
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error saving farmer profile:', error);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

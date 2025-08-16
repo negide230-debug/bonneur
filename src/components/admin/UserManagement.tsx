@@ -4,7 +4,7 @@ import { User } from '../../types';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import { storage } from '../../utils/storage';
+import { UserService } from '../../services/userService';
 
 export function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -15,26 +15,35 @@ export function UserManagement() {
     loadUsers();
   }, []);
 
-  const loadUsers = () => {
-    const allUsers = storage.getUsers();
-    setUsers(allUsers);
+  const loadUsers = async () => {
+    try {
+      const allUsers = await UserService.getAllUsers();
+      setUsers(allUsers);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
   };
 
-  const toggleUserStatus = (userId: string) => {
-    const allUsers = storage.getUsers();
-    const updatedUsers = allUsers.map(user => 
-      user.id === userId ? { ...user, isActive: !user.isActive } : user
-    );
-    storage.saveUsers(updatedUsers);
-    loadUsers();
+  const toggleUserStatus = async (userId: string) => {
+    try {
+      const user = users.find(u => u.id === userId);
+      if (user) {
+        await UserService.updateUser(userId, { isActive: !user.isActive });
+        loadUsers();
+      }
+    } catch (error) {
+      console.error('Error updating user status:', error);
+    }
   };
 
-  const deleteUser = (userId: string) => {
+  const deleteUser = async (userId: string) => {
     if (confirm('Delete this user? This action cannot be undone.')) {
-      const allUsers = storage.getUsers();
-      const updatedUsers = allUsers.filter(user => user.id !== userId);
-      storage.saveUsers(updatedUsers);
-      loadUsers();
+      try {
+        await UserService.deleteUser(userId);
+        loadUsers();
+      } catch (error) {
+        console.error('Error deleting user:', error);
+      }
     }
   };
 
